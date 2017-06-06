@@ -13,6 +13,7 @@ import java.nio.*;
 import java.nio.file.Files;
 import java.util.stream.Stream;
 import javax.print.DocFlavor;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -36,33 +37,24 @@ public class Editor extends javax.swing.JFrame
     private void initComponents()
     {
 
-        jScrollPane2 = new javax.swing.JScrollPane();
-        textArea = new javax.swing.JTextArea();
         toolBar = new javax.swing.JToolBar();
         jLabel2 = new javax.swing.JLabel();
         statusBar = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        textArea = new javax.swing.JTextPane();
         menuBar = new javax.swing.JMenuBar();
         menuFile = new javax.swing.JMenu();
         menuFileOpen = new javax.swing.JMenuItem();
         menuFileSave = new javax.swing.JMenuItem();
+        menuFileSaveas = new javax.swing.JMenuItem();
         jMenu2 = new javax.swing.JMenu();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("文本编辑器");
         setFont(new java.awt.Font("微软雅黑", 0, 18)); // NOI18N
         setLocationByPlatform(true);
-        setPreferredSize(new java.awt.Dimension(1000, 600));
         setSize(new java.awt.Dimension(1000, 600));
-
-        textArea.setColumns(20);
-        textArea.setFont(new java.awt.Font("宋体", 0, 18)); // NOI18N
-        textArea.setLineWrap(true);
-        textArea.setRows(1);
-        textArea.setTabSize(1);
-        textArea.setDoubleBuffered(true);
-        textArea.setMargin(new java.awt.Insets(0, 2, 0, 2));
-        jScrollPane2.setViewportView(textArea);
 
         toolBar.setBackground(new java.awt.Color(255, 255, 255));
         toolBar.setFloatable(false);
@@ -79,6 +71,8 @@ public class Editor extends javax.swing.JFrame
         jLabel1.setFont(new java.awt.Font("宋体", 0, 18)); // NOI18N
         jLabel1.setText("状态栏");
         statusBar.add(jLabel1, java.awt.BorderLayout.LINE_START);
+
+        jScrollPane1.setViewportView(textArea);
 
         menuBar.setFont(menuBar.getFont().deriveFont(menuBar.getFont().getSize()+3f));
 
@@ -109,6 +103,17 @@ public class Editor extends javax.swing.JFrame
         });
         menuFile.add(menuFileSave);
 
+        menuFileSaveas.setFont(new java.awt.Font("Microsoft YaHei UI", 0, 18)); // NOI18N
+        menuFileSaveas.setText("另存为");
+        menuFileSaveas.addActionListener(new java.awt.event.ActionListener()
+        {
+            public void actionPerformed(java.awt.event.ActionEvent evt)
+            {
+                menuFileSaveasActionPerformed(evt);
+            }
+        });
+        menuFile.add(menuFileSaveas);
+
         menuBar.add(menuFile);
 
         jMenu2.setText("Edit");
@@ -121,16 +126,16 @@ public class Editor extends javax.swing.JFrame
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(toolBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 1000, Short.MAX_VALUE)
+            .addComponent(toolBar, javax.swing.GroupLayout.DEFAULT_SIZE, 1000, Short.MAX_VALUE)
             .addComponent(statusBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jScrollPane1)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(toolBar, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 524, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 510, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
                 .addComponent(statusBar, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
@@ -138,6 +143,10 @@ public class Editor extends javax.swing.JFrame
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    /**
+     * 打开
+     * @param evt 
+     */
     private void menuFileOpenActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_menuFileOpenActionPerformed
     {//GEN-HEADEREND:event_menuFileOpenActionPerformed
         JFileChooser fileChooser=new JFileChooser();
@@ -152,17 +161,28 @@ public class Editor extends javax.swing.JFrame
                      {
                          str.append((char)ch);
                      }
-                    textArea.append(str.toString());
+                    textArea.setText(str.toString());
                     reader.close();
          }
          catch (IOException x)
          {
-                    System.err.format("IOException: %s%n", x);
+                    JOptionPane.showMessageDialog(this, x.toString(),"打开失败", JOptionPane.ERROR_MESSAGE);
           }
     }//GEN-LAST:event_menuFileOpenActionPerformed
 
+    /**
+     * 保存
+     * @param evt 
+     */
     private void menuFileSaveActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_menuFileSaveActionPerformed
     {//GEN-HEADEREND:event_menuFileSaveActionPerformed
+        if (currentFile==null)  //如果是新建的文件
+        {
+            JFileChooser fileChooser=new JFileChooser();
+            int i=fileChooser.showSaveDialog(null);
+            if(i!= JFileChooser.APPROVE_OPTION) return;  //如果用户没有选择文件
+            currentFile=fileChooser.getSelectedFile();
+        }
         try (BufferedWriter writer=Files.newBufferedWriter(currentFile.toPath()))
         {
             writer.write(textArea.getText());
@@ -170,9 +190,30 @@ public class Editor extends javax.swing.JFrame
         }
         catch (IOException x)
         {
-            System.err.format("IOException: %s%n", x);
+            JOptionPane.showMessageDialog(this, x.toString(),"保存失败", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_menuFileSaveActionPerformed
+
+    /**
+     * 另存为
+     * @param evt 
+     */
+    private void menuFileSaveasActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_menuFileSaveasActionPerformed
+    {//GEN-HEADEREND:event_menuFileSaveasActionPerformed
+        JFileChooser fileChooser=new JFileChooser();
+        int i=fileChooser.showSaveDialog(null);
+        if(i!= JFileChooser.APPROVE_OPTION) return;  //如果用户没有选择文件
+        File newFile=fileChooser.getSelectedFile();
+        try (BufferedWriter writer=Files.newBufferedWriter(newFile.toPath()))
+        {
+            writer.write(textArea.getText());
+            writer.close();
+        }
+        catch (IOException x)
+        {
+            JOptionPane.showMessageDialog(this, x.toString(),"保存失败", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_menuFileSaveasActionPerformed
 
     /**
      * @param args the command line arguments
@@ -204,12 +245,9 @@ public class Editor extends javax.swing.JFrame
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() 
+        java.awt.EventQueue.invokeLater(() -> 
         {
-            public void run() 
-            {
-                new Editor().setVisible(true);
-            }
+            new Editor().setVisible(true);
         });
     }
 
@@ -217,13 +255,14 @@ public class Editor extends javax.swing.JFrame
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JMenu jMenu2;
-    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JMenuBar menuBar;
     private javax.swing.JMenu menuFile;
     private javax.swing.JMenuItem menuFileOpen;
     private javax.swing.JMenuItem menuFileSave;
+    private javax.swing.JMenuItem menuFileSaveas;
     private javax.swing.JPanel statusBar;
-    private javax.swing.JTextArea textArea;
+    private javax.swing.JTextPane textArea;
     private javax.swing.JToolBar toolBar;
     // End of variables declaration//GEN-END:variables
 
